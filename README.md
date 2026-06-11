@@ -1,11 +1,13 @@
 # AML Alert Triage Copilot
 
 <p align="center">
-  <img src="./AML_1.png" alt="AML Alert Triage Copilot GUI after processing" width="900">
-</p>
-<p align="center">
   <img src="./AML_2.png" alt="AML Alert Triage Copilot GUI before processing" width="900">
 </p>
+
+<p align="center">
+  <img src="./AML_1.png" alt="AML Alert Triage Copilot GUI after processing" width="900">
+</p>
+
 
 This project is a small but realistic prototype of an **AI-assisted AML investigator copilot**.  
 It takes transaction monitoring alerts as JSON, generates a structured risk summary (typology, risk bucket, indicators, explanation), and leaves the **final decision explicitly to a human investigator**.
