@@ -1,4 +1,3 @@
-cat > README.md << 'EOF'
 # AML Alert Triage Copilot
 
 This project is a small but realistic prototype of an **AI-assisted AML investigator copilot**.  
