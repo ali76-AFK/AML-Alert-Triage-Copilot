@@ -9,8 +9,6 @@
 </p>
 
 
-# AML Alert Triage Copilot
-
 AI-assisted AML triage copilot with structured analysis and human-in-the-loop decision support.
 
 ## Overview
