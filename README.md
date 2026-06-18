@@ -9,154 +9,118 @@
 </p>
 
 
-This project is a small but realistic prototype of an **AI-assisted AML investigator copilot**.  
-It takes transaction monitoring alerts as JSON, generates a structured risk summary (typology, risk bucket, indicators, explanation), and leaves the **final decision explicitly to a human investigator**.
+# AML Alert Triage Copilot
+
+AI-assisted AML triage copilot with structured analysis and human-in-the-loop decision support.
+
+## Overview
+
+This project is a realistic prototype of an AI-assisted AML investigator copilot.  
+It takes transaction monitoring alerts as JSON, generates a structured risk analysis, and leaves the final decision explicitly to a human investigator.
+
 
 The goal is to demonstrate:
-- AI workflow design (LLM + rule overlay + human-in-the-loop).
+- AI workflow design with LLMs and rule overlays.
 - Structured outputs instead of a generic chatbot.
 - Clear boundaries between AI suggestions and compliance decisions.
-- A demo-friendly UI suitable for a 10-minute live walkthrough.
+- A demo-friendly UI suitable for a live portfolio walkthrough.
 
-> **Important:** This project uses synthetic data only and is for demonstration/portfolio purposes.  
-> It is not a production system and is not a substitute for regulatory model validation or full AML programs.
+> Important: This project uses synthetic data only and is for demonstration and portfolio purposes.  
+> It is not a production AML system and is not a substitute for regulatory model validation.
 
----
+## Workflow
+
+1. The user enters or edits an `AlertInput` JSON object.
+2. The backend sends the alert to an LLM for structured analysis.
+3. A small rule overlay adjusts the output when needed.
+4. The UI presents the analysis alongside a human-in-the-loop decision section.
+5. The investigator chooses the final action and can edit the final note.
+
 
 ## Architecture
 
-- **Backend:** FastAPI (Python)  
-  - Pydantic models for `AlertInput` and `AlertAnalysisOutput`.  
-  - `analyze` endpoint calls an LLM to generate a structured summary and applies a small rule overlay (e.g. enforcing minimum risk for high-risk customers).
+### Backend
+- FastAPI (Python)
+- Pydantic models for `AlertInput` and `AlertAnalysisOutput`
+- `/analyze` endpoint for structured alert analysis
+- Small rule overlay for deterministic risk adjustments
 
-- **LLM layer:** Groq Cloud (OpenAI-compatible API) + Llama 3  
-  - Uses an OpenAI-compatible client pointed at Groq's base URL.  
-  - Prompt is tuned for:
-    - AML typologies (structuring/smurfing, layering, mule accounts, sanctions risk, terrorist financing, fraud patterns, unusual behavior change).  
-    - Explainability: explanations must reference concrete alert fields.  
-    - Boundaries: never file SARs or make final “no-risk” statements.
+### LLM Layer
+- Groq Cloud using an OpenAI-compatible API
+- Llama 3 as the model backend
+- Prompt tuned for:
+  - AML typologies such as structuring, layering, mule accounts, sanctions risk, terrorist financing, fraud patterns, and unusual behavior changes
+  - Explainability tied to concrete alert fields
+  - Clear boundaries: no SAR filing and no final regulatory decisions
 
-- **Frontend:** Streamlit  
-  - Left: editable JSON for the alert (with a couple of pre-defined examples).  
-  - Right: AI-generated structured analysis + a "Human-in-the-loop" section where the investigator chooses the final decision and edits the note.
+### Frontend
+- Streamlit UI
+- Editable JSON input on the left
+- Structured AI output on the right
+- Human-in-the-loop decision section for the final investigator action
 
----
+## Demo Scenarios
 
-## Getting started
+### Structuring suspicion
+Use the example with multiple transfers just below the reporting threshold to show:
+- typology detection,
+- explanation grounded in alert fields,
+- suggested escalation,
+- human review instead of automated final judgment.
 
-### 1. Clone the repository
+### Likely false positive
+Use the lower-risk customer example to show:
+- how risk indicators differ,
+- how false-positive signals are identified,
+- how the human can close the case as likely benign.
 
+## Limitations
+
+- Synthetic alerts only.
+- No persistence layer yet.
+- Typology and rule sets are intentionally small for clarity.
+
+## Setup
+
+### Clone the repository
 ```bash
 git clone https://github.com/ali76-AFK/AML-Alert-Triage-Copilot.git
 cd AML-Alert-Triage-Copilot
 ```
 
-### 2. Create and activate a virtual environment (Python 3.10+)
-
+### Create a virtual environment
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
 ```
 
-### 3. Install dependencies
-
+### Install dependencies
 ```bash
 python -m pip install --upgrade pip
 python -m pip install fastapi uvicorn[standard] pydantic streamlit openai python-dotenv httpx
 ```
 
-### 4. Configure Groq API (LLM backend)
-
+### Configure environment variables
 Create a `.env` file in the project root:
 
-```text
+```env
 GROQ_API_KEY=gsk_YOUR_REAL_KEY_HERE
 GROQ_MODEL=llama-3.1-8b-instant
 GROQ_BASE_URL=https://api.groq.com/openai/v1
 ```
 
-> `.env` is in `.gitignore` and should **never** be committed.
-
-### 5. Run backend (FastAPI)
-
+### Run the backend
 ```bash
 uvicorn app.main:app --reload
 ```
 
-Test quickly:
-
+### Run the frontend
 ```bash
-python scripts/test_request.py   # optional helper script or use curl
-```
-
-### 6. Run frontend (Streamlit UI)
-
-In another terminal:
-
-```bash
-source .venv/bin/activate
 streamlit run ui/app.py
 ```
 
-Open the URL printed by Streamlit (usually `http://localhost:8501`).
+## Next Steps
 
----
-
-## How the workflow behaves
-
-1. **Input:** An `AlertInput` JSON describing a transaction monitoring alert  
-   (amount, countries, customer risk, alert reason, historical behavior, etc.).
-
-2. **LLM analysis:**
-   - Maps the alert into a strict `AlertAnalysisOutput` schema:
-     - `summary`
-     - `suspected_typology`
-     - `risk_bucket`
-     - `key_risk_indicators`
-     - `potential_false_positive_signals`
-     - `recommended_next_action`
-     - `explanation`
-     - `confidence`
-   - Follows AML typology guidelines (e.g., structuring/smurfing when there are multiple just-below-threshold transactions; layering when flows are complex and obscuring origin).[1][2]
-
-3. **Rule overlay:**
-   - Simple Python rules adjust the AI output (e.g., never keep risk as "Low" for inherently high-risk customers, or very large transactions).
-   - Explanation is annotated so it is clear what came from the model vs. deterministic rules.
-
-4. **Human-in-the-loop decision:**
-   - The UI shows AI output, but the dropdown for the final decision is always controlled by the human.
-   - The investigator note can be edited and represents what would be stored in a real case management system.
-
----
-
-## Demo notes (for interviews)
-
-For a 10-minute live demo, you can:
-
-- Start with the “Structuring suspicion” example (three transfers just below reporting threshold).  
-- Show how the copilot:
-  - Identifies an appropriate typology (e.g., “Structuring / Smurfing” or “Unusual High-Value Transfer”).  
-  - Explains the risk in terms of amounts, frequency, and deviation from historical behavior.  
-  - Suggests “Investigate further” or “Escalate”, but does **not** make a final regulatory decision.
-
-- Then switch to the “Likely false positive” example (slightly higher salary for a low-risk retail customer).  
-- Highlight the difference in risk indicators and potential false positive signals, and how the human may choose to close it as a likely false positive.
-
----
-
-## Limitations and next steps
-
-- Synthetic alerts only; no real customer data.  
-- No persistence layer yet (decisions are not stored in a real database).  
-- Typology and rule sets are deliberately small for clarity.
-
-Possible extensions:
-
-- Add a small SQLite database for logging AI suggestions vs. human decisions.  
-- Support more alert types and richer typology lists.  
-- Integrate with real AML systems, ticketing tools, or case management APIs (where allowed).
-
----
-
-[1] Common AML typologies (structuring, layering, mule accounts, sanctions) as described in public typology reports and AML guidance.  
-[2] Explainable AI and model validation practices from public AML/financial crime literature.
+- Add SQLite logging for AI suggestions and human decisions.
+- Support more alert types and richer typology coverage.
+- Integrate with case management or ticketing systems where allowed.
